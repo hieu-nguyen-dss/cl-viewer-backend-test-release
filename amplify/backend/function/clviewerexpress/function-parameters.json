@@ -1,0 +1,17 @@
+{
+  "lambdaLayers": [
+    {
+      "type": "ProjectLayer",
+      "resourceName": "clviewercommons",
+      "version": "Always choose latest version",
+      "isLatestVersionSelected": true,
+      "env": "dev"
+    }
+  ],
+  "permissions": {
+    "storage": {
+      "clvieweruserdata": ["create", "read", "update", "delete"],
+      "clviewerrawdata": ["create", "read", "update", "delete"]
+    }
+  }
+}

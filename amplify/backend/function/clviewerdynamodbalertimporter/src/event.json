@@ -1,0 +1,13 @@
+{
+  "version": "0",
+  "id": "55a10c11-47ec-9850-d0e9-e279f2a4f2bc",
+  "detail-type": "Scheduled Event",
+  "source": "aws.events",
+  "account": "772269852679",
+  "time": "2021-12-28T15:15:00Z",
+  "region": "ap-northeast-1",
+  "resources": [
+    "arn:aws:events:ap-northeast-1:772269852679:rule/amplify-clviewer-dev-163101-functi-CloudWatchEvent-1DJKTDWNC7OF3"
+  ],
+  "detail": {}
+}

@@ -1,0 +1,37 @@
+{
+  "resourceName": "clviewerrawdata",
+  "tableName": "clviewerrawdata",
+  "partitionKey": {
+    "fieldName": "pk",
+    "fieldType": "string"
+  },
+  "sortKey": {
+    "fieldName": "sk",
+    "fieldType": "string"
+  },
+  "gsi": [
+    {
+      "name": "corporationId-sk-index",
+      "partitionKey": {
+        "fieldName": "corporationId",
+        "fieldType": "string"
+      },
+      "sortKey": {
+        "fieldName": "sk",
+        "fieldType": "string"
+      }
+    },
+    {
+      "name": "machineIdEstimatedBehaviorId-sk-index",
+      "partitionKey": {
+        "fieldName": "machineIdEstimatedBehaviorId",
+        "fieldType": "string"
+      },
+      "sortKey": {
+        "fieldName": "sk",
+        "fieldType": "string"
+      }
+    }
+  ],
+  "triggerFunctions": []
+}

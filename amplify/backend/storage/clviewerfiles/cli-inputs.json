@@ -1,0 +1,18 @@
+{
+  "resourceName": "clviewerfiles",
+  "policyUUID": "61743fee",
+  "bucketName": "clviewerfiles",
+  "storageAccess": "authAndGuest",
+  "guestAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "clviewerdynamodbimporter",
+  "groupAccess": {}
+}

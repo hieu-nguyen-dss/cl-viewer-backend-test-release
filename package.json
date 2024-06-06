@@ -1,0 +1,21 @@
+{
+  "name": "cl-viewer-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "amplify:clviewercommons": "cd amplify/backend/function/clviewercommons && yarn --ignore-engines && yarn install && cd ../../../../",
+    "amplify:clviewerexpress": "yarn run amplify:clviewercommons && cd amplify/backend/function/clviewerexpress && yarn --ignore-engines && yarn install && cd ts && yarn install && yarn global add typescript && npm run tsc && cd ../../../../"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ll-e3/cl-viewer-backend/"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^4.5.2"
+  }
+}

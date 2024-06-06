@@ -1,0 +1,353 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Lambda Function resource stack creation using Amplify CLI",
+    "Parameters": {
+        "CloudWatchRule": {
+            "Type": "String",
+            "Default": "NONE",
+            "Description": " Schedule Expression"
+        },
+        "deploymentBucketName": {
+            "Type": "String"
+        },
+        "env": {
+            "Type": "String"
+        },
+        "s3Key": {
+            "Type": "String"
+        },
+        "storageclviewerfilesBucketName": {
+            "Type": "String",
+            "Default": "storageclviewerfilesBucketName"
+        }
+    },
+    "Conditions": {
+        "ShouldNotCreateEnvResources": {
+            "Fn::Equals": [
+                {
+                    "Ref": "env"
+                },
+                "NONE"
+            ]
+        }
+    },
+    "Resources": {
+        "LambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Metadata": {
+                "aws:asset:path": "./src",
+                "aws:asset:property": "Code"
+            },
+            "Properties": {
+                "Code": {
+                    "S3Bucket": {
+                        "Ref": "deploymentBucketName"
+                    },
+                    "S3Key": {
+                        "Ref": "s3Key"
+                    }
+                },
+                "Handler": "index.handler",
+                "FunctionName": {
+                    "Fn::If": [
+                        "ShouldNotCreateEnvResources",
+                        "clviewers3sensingimporter",
+                        {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "clviewers3sensingimporter",
+                                    "-",
+                                    {
+                                        "Ref": "env"
+                                    }
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "Environment": {
+                    "Variables": {
+                        "ENV": {
+                            "Ref": "env"
+                        },
+                        "REGION": {
+                            "Ref": "AWS::Region"
+                        },
+                        "STORAGE_CLVIEWERFILES_BUCKETNAME": {
+                            "Ref": "storageclviewerfilesBucketName"
+                        },
+                        "LL_AUTH_URL": {
+                            "Fn::Sub": [
+                                "{{resolve:secretsmanager:clviewer/${env}:SecretString:LL_AUTH_URL}}",
+                                {
+                                    "env": {
+                                        "Ref": "env"
+                                    }
+                                }
+                            ]
+                        },
+                        "LL_API_URL": {
+                            "Fn::Sub": [
+                                "{{resolve:secretsmanager:clviewer/${env}:SecretString:LL_API_URL}}",
+                                {
+                                    "env": {
+                                        "Ref": "env"
+                                    }
+                                }
+                            ]
+                        },
+                        "LL_CLIENT_ID_BACKEND": {
+                            "Fn::Sub": [
+                                "{{resolve:secretsmanager:clviewer/${env}:SecretString:LL_CLIENT_ID_BACKEND}}",
+                                {
+                                    "env": {
+                                        "Ref": "env"
+                                    }
+                                }
+                            ]
+                        },
+                        "LL_CLIENT_SECRET_BACKEND": {
+                            "Fn::Sub": [
+                                "{{resolve:secretsmanager:clviewer/${env}:SecretString:LL_CLIENT_SECRET_BACKEND}}",
+                                {
+                                    "env": {
+                                        "Ref": "env"
+                                    }
+                                }
+                            ]
+                        },
+                        "LL_FILE_STORAGE_ID": {
+                            "Fn::Sub": [
+                                "{{resolve:secretsmanager:clviewer/${env}:SecretString:LL_FILE_STORAGE_ID}}",
+                                {
+                                    "env": {
+                                        "Ref": "env"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.9",
+                "MemorySize": "1024",
+                "Layers": [],
+                "Timeout": 600
+            }
+        },
+        "LambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": {
+                    "Fn::If": [
+                        "ShouldNotCreateEnvResources",
+                        "clviewerbackendLambdaRoleaaa6dc8d",
+                        {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "clviewerbackendLambdaRoleaaa6dc8d",
+                                    "-",
+                                    {
+                                        "Ref": "env"
+                                    }
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "lambdaexecutionpolicy": {
+            "DependsOn": [
+                "LambdaExecutionRole"
+            ],
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "lambda-execution-policy",
+                "Roles": [
+                    {
+                        "Ref": "LambdaExecutionRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogGroup",
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": {
+                                "Fn::Sub": [
+                                    "arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*",
+                                    {
+                                        "region": {
+                                            "Ref": "AWS::Region"
+                                        },
+                                        "account": {
+                                            "Ref": "AWS::AccountId"
+                                        },
+                                        "lambda": {
+                                            "Ref": "LambdaFunction"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "AmplifyResourcesPolicy": {
+            "DependsOn": [
+                "LambdaExecutionRole"
+            ],
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "amplify-lambda-execution-policy",
+                "Roles": [
+                    {
+                        "Ref": "LambdaExecutionRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "s3:ListBucket",
+                            "Resource": [
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "arn:aws:s3:::",
+                                            {
+                                                "Ref": "storageclviewerfilesBucketName"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:PutObject",
+                                "s3:GetObject"
+                            ],
+                            "Resource": [
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "arn:aws:s3:::",
+                                            {
+                                                "Ref": "storageclviewerfilesBucketName"
+                                            },
+                                            "/*"
+                                        ]
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "CloudWatchEvent": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "Description": "Schedule rule for Lambda",
+                "ScheduleExpression": {
+                    "Ref": "CloudWatchRule"
+                },
+                "State": "ENABLED",
+                "Targets": [
+                    {
+                        "Arn": {
+                            "Fn::GetAtt": [
+                                "LambdaFunction",
+                                "Arn"
+                            ]
+                        },
+                        "Id": {
+                            "Ref": "LambdaFunction"
+                        }
+                    }
+                ]
+            }
+        },
+        "PermissionForEventsToInvokeLambda": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "FunctionName": {
+                    "Ref": "LambdaFunction"
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "events.amazonaws.com",
+                "SourceArn": {
+                    "Fn::GetAtt": [
+                        "CloudWatchEvent",
+                        "Arn"
+                    ]
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "Name": {
+            "Value": {
+                "Ref": "LambdaFunction"
+            }
+        },
+        "Arn": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "LambdaFunction",
+                    "Arn"
+                ]
+            }
+        },
+        "Region": {
+            "Value": {
+                "Ref": "AWS::Region"
+            }
+        },
+        "LambdaExecutionRole": {
+            "Value": {
+                "Ref": "LambdaExecutionRole"
+            }
+        },
+        "CloudWatchEventRule": {
+            "Value": {
+                "Ref": "CloudWatchEvent"
+            }
+        }
+    }
+}

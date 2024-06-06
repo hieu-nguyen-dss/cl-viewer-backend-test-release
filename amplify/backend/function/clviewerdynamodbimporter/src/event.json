@@ -1,0 +1,38 @@
+{
+  "Records": [
+    {
+      "eventVersion": "2.1",
+      "eventSource": "aws:s3",
+      "awsRegion": "ap-northeast-1",
+      "eventTime": "2021-12-15T16:28:14.072Z",
+      "eventName": "ObjectCreated:Put",
+      "userIdentity": {
+        "principalId": "AWS:AIDA3HTW6ZAD4ICF26PRC"
+      },
+      "requestParameters": {
+        "sourceIPAddress": "125.30.68.32"
+      },
+      "responseElements": {
+        "x-amz-request-id": "AJ1AHKX1J9JY84TY",
+        "x-amz-id-2": "1AjaFThPReQU+yxjhZFZ+5O5Mqa7adXgmaWPuZgkcIX0tpu2DaJYYLe3rZ/0kdNww5a5XIIWluE+8XQvLiNFR+yUW9uhmBSp"
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "a3392385-d303-4b35-b536-4f7ede61c0d7",
+        "bucket": {
+          "name": "clviewerfiles163101-dev",
+          "ownerIdentity": {
+            "principalId": "A3A3JJI7ZYNP2"
+          },
+          "arn": "arn:aws:s3:::clviewerfiles163101-dev"
+        },
+        "object": {
+          "key": "private/ap-northeast-1/sensing/dt%3D20211008/fac33128-62d0-4eda-82a4-041aeb44f0e7/sensing.csv",
+          "size": 1932,
+          "eTag": "8e33d12688ca8c745f266846e3bbc1b1",
+          "sequencer": "0061BA179E02C84692"
+        }
+      }
+    }
+  ]
+}

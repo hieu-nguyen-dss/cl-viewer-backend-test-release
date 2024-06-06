@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "storage": {
+      "clviewerrawdata": [
+        "create",
+        "read",
+        "update"
+      ]
+    }
+  },
+  "lambdaLayers": []
+}
