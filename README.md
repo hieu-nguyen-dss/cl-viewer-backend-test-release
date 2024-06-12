@@ -26,13 +26,14 @@ $ amplify mock function
 ```
 
 ### Api
-- npm install
-```
-$ npm install -g nodemon ts-node
-$ npm run amplify:clviewercommons
-$ npm run amplify:clviewerexpress
-```
 - start local server
 ```
+$ make setup-api
 $ make start
+```
+
+## API Doc
+### Open Swagger UI
+```
+$ make swagger-open
 ```

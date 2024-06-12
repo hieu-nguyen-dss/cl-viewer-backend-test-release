@@ -1,11 +1,22 @@
 import AWS from 'aws-sdk';
 import { CorporationMachine } from './types/clviewer/corporationMachine';
+import { Machine } from './types/clviewer/machine';
+import { SensingData } from './types/clviewer/sensingData';
 import { SiteMachine } from './types/clviewer/siteMachine';
 
 const STORAGE_CLVIEWERUSERDATA_NAME = process.env.STORAGE_CLVIEWERUSERDATA_NAME;
 const STORAGE_CLVIEWERRAWDATA_NAME = process.env.STORAGE_CLVIEWERRAWDATA_NAME;
-
 const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+
+export const getMachine = async (corporationId: string, machineId: string) => {
+  return (await dynamoDbClient.get({
+    TableName: STORAGE_CLVIEWERUSERDATA_NAME,
+    Key: {
+      pk: `CORPORATION#${corporationId}`,
+      sk: `MACHINE#${machineId}`,
+    },
+  }).promise()).Item as Machine;
+};
 
 export const getSitesDataForCorporation = async (corporationId: string) => {
   const queryInput = {
@@ -212,7 +223,7 @@ export const deleteSiteMachineBySk = async (corporationId: string, sk: string) =
   await dynamoDbClient.delete(deleteItemInput).promise();
 };
 
-export const getAlertForCorporation = async (corporationId: string) => {
+export const getAlertsForCorporation = async (corporationId: string) => {
   const queryInput = {
     TableName: STORAGE_CLVIEWERRAWDATA_NAME,
     ScanIndexForward: false,
@@ -258,23 +269,24 @@ export const getSensingForMachine = async (machineId: string, startTime: number,
     if (!result.LastEvaluatedKey) break;
     exclusiveStartKey = result.LastEvaluatedKey;
   }
-  return items
+  return items.flat() as SensingData
 };
 
-export const getAlertForMachine = async (machineId: string) => {
-  const queryInput = {
+export const getAlertsForMachine = async (machineId: string) => {
+  return (await dynamoDbClient.query({
     TableName: STORAGE_CLVIEWERRAWDATA_NAME,
     ScanIndexForward: false,
     ConsistentRead: false,
-    KeyConditionExpression: '#pk = :pk',
+    KeyConditionExpression: '#pk = :pk And begins_with(#sk, :sk)',
     ExpressionAttributeValues: {
       ':pk': `MACHINE#${machineId}`,
+      ':sk': 'ALERT#',
     },
     ExpressionAttributeNames: {
       '#pk': 'pk',
+      '#sk': 'sk',
     },
-  };
-  return (await dynamoDbClient.query(queryInput).promise()).Items;
+  }).promise()).Items;
 };
 
 export const countMachineSensingBetweenTimes = async (machineId: string, startTime: number, endTime: number) => {

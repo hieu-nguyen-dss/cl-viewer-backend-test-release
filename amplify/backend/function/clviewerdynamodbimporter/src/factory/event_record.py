@@ -14,3 +14,4 @@ class EventRecordFactory:
             objectKey=object_key,
             type=object_key_split[2]
         )
+

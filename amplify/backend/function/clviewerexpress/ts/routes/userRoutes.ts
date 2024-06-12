@@ -3,16 +3,14 @@ import express from 'express';
 import { getAccessToken, getSites } from '../../../clviewercommons/opt/landlog.api';
 import {
   countMachineBehaviorBetweenTimes, countMachineSensingBetweenTimes, createCorporationSite,
-  getAlertForCorporation,
-  getAlertForMachine, getCorporationMachine,
+  getAlertsForCorporation,
+  getAlertsForMachine, getCorporationMachine,
   getCorporationSite,
+  getMachine,
   getMachinesForCorporation,
   getMachinesLinksForSite,
-  getMachinesLinksForSiteMachine,
   getSensingForMachine,
-  getSiteMachineBySk,
-  getSiteMachinesForCorporation,
-  getSitesDataForCorporation,
+  getSiteMachineBySk, getSitesDataForCorporation,
   updateCorporationSite,
   updateSiteMachineBySk
 } from '../../../clviewercommons/opt/machines';
@@ -46,30 +44,26 @@ function calculateTotalActivitySeconds(activities: MachineActivities): number {
  */
 userRoutes.get('/alerts', async (req: express.Request, res: express.Response) => {
   const { user } = req;
-  const alerts = await getAlertForCorporation(user.corporationId);
-  const corporationSiteMachines = await getSiteMachinesForCorporation(user.corporationId);
-  const corporationMachines = await getMachinesForCorporation(user.corporationId);
-
-  const alertsWithMachineDetails = alerts.map((alert) => {
-    const machineId = alert.pk.split('#')[1];
-    const machineFound = corporationSiteMachines.find((machine) => machine.machineId === machineId);
-    const machineWithVehicleId = corporationMachines.find((machine) => machine.machineId === machineId);
-    return {
-      corporationId: alert.corporationId,
-      alertType: alert.alertType,
-      unixtime: alert.unixtime,
-      alertId: alert.alertId,
-      machine: {
-        machineId: machineFound?.machineId ?? null,
-        machineColorCode: machineFound?.machineColorCode ?? null,
-        machineName: machineFound?.machineName ?? null,
-        machineType: machineFound?.machineType ?? null,
-        vehicleId: machineWithVehicleId?.vehicleId ?? null,
-      },
-    };
+  const alerts = await getAlertsForCorporation(user.corporationId);
+  const machines = await getMachinesForCorporation(user.corporationId);
+  res.status(200).json({
+    corporationId: user.corporationId,
+    alerts: alerts.map((alert) => {
+      const machine = machines.find((m) => m.machineId === alert.machineId);
+      return {
+        unixtime: alert.unixtime,
+        alertType: alert.alertType,
+        alertId: alert.alertId,
+        machine: {
+          id: machine?.machineId ?? null,
+          colorCode: machine?.machineColorCode ?? null,
+          name: machine?.machineName ?? null,
+          type: machine?.machineType ?? null,
+          vehicleId: machine?.vehicleId ?? null,
+        },
+      }
+    })
   });
-
-  res.status(200).json(alertsWithMachineDetails);
 });
 
 /**
@@ -102,29 +96,6 @@ userRoutes.get('/sites', async (req: express.Request, res: express.Response) => 
 });
 
 /**
- * Update site's data
- * For now it's just business hours
- */
-userRoutes.patch('/sites/:siteId', async (req: express.Request, res: express.Response) => {
-  const { user } = req;
-  const { siteId } = req.params;
-  const { startTimeJst, endTimeJst } = req.body;
-
-  if (typeof startTimeJst !== 'string' || typeof endTimeJst !== 'string') {
-    return res.status(400).json({ error: 'startTimeJst and endTimeJst should be string' });
-  }
-
-  const corporationSite = await getCorporationSite(user.corporationId, siteId);
-  if (corporationSite) {
-    await updateCorporationSite(user.corporationId, siteId, { startTimeJst, endTimeJst });
-  } else {
-    await createCorporationSite(user.corporationId, siteId, startTimeJst, endTimeJst);
-  }
-
-  res.status(200).json({ startTimeJst, endTimeJst });
-});
-
-/**
  * Get sensing data for a site specified by siteId
  * Data can be filtered by start and end date
  */
@@ -139,8 +110,8 @@ userRoutes.get('/sites/:siteId/sensing', async (req: express.Request, res: expre
   const siteMachine = await getMachinesLinksForSite(corporationId, siteId, startDate as string, endDate as string);
   // Getting site details for the corporation
   const siteCorp = await getCorporationSite(corporationId, siteId);
-  const startTimestamp = Math.floor(new Date(startDate as string).setHours(0, 0, 0, 0) / 1000);
-  const endTimestamp = Math.floor(new Date(endDate as string).setHours(23, 59, 59, 0) / 1000);
+  const startTimestamp = Date.parse(`${startDate as string}T00:00:00+09:00`) / 1000
+  const endTimestamp = Date.parse(`${endDate as string}T23:59:59+09:00`) / 1000
   console.log(`startDate: ${startDate}, endDate: ${endDate}, startTimestamp: ${startTimestamp}, endTimestamp: ${endTimestamp}`)
 
   const machinesWithDetails = await Promise.all(
@@ -153,7 +124,6 @@ userRoutes.get('/sites/:siteId/sensing', async (req: express.Request, res: expre
       ]);
       // Sorting the sensing data in order so that oldest is seen first
       const sortedSensingData = [...(machineDetails ?? [])]
-        .reduce((e, r) => { return r.concat(e) }, [])
         .filter((_e, i) => { return i % 5 === 0 })
         .sort((a, b) => a.unixtime - b.unixtime);
       // getting the latest latitude and longitude of the machine
@@ -247,8 +217,26 @@ userRoutes.patch('/machines', async (req: express.Request, res: express.Response
  * Data can be filtered by start and end date
  */
 userRoutes.get('/machines/:machineId/alerts', async (req: express.Request, res: express.Response) => {
-  const sensing = await getAlertForMachine(req.params.machineId);
-  return res.status(200).json(sensing);
+  const { user } = req;
+  const machineId = req.params.machineId
+  const machine = await getMachine(user.corporationId, machineId)
+  const alerts = await getAlertsForMachine(machineId);
+  res.status(200).json({
+    machineId: machineId,
+    alerts: alerts.map((alert) => {
+      return {
+        unixtime: alert.unixtime,
+        alertType: alert.alertType,
+        alertId: alert.alertId,
+        machine: {
+          colorCode: machine?.machineColorCode ?? null,
+          name: machine?.machineName ?? null,
+          type: machine?.machineType ?? null,
+          vehicleId: machine?.vehicleId ?? null,
+        },
+      }
+    })
+  });
 });
 
 userRoutes.get('/me', async (req: express.Request, res: express.Response) => {
@@ -303,68 +291,15 @@ userRoutes.get('/machines/:machineId/sensing', async (req: express.Request, res:
       start: startTimestamp,
       end: endTimestamp
     },
-    sensingData: sensingData
+    sensingData: sensingData.map( d => {
+      return {
+        ut: Number(d.unixtime),
+        lat: parseFloat(d.latitude).toFixed(7),
+        lon: parseFloat(d.longitude).toFixed(7),
+        bId: Number(d.estimatedBehaviorId)
+      }
+  })
   });
-});
-
-userRoutes.get('/sites/:siteId/machines/:machineId/sensing', async (req: express.Request, res: express.Response) => {
-  const { user } = req;
-
-  const { siteId, machineId } = req.params;
-  const { startDate, endDate } = req.query;
-
-  const { corporationId } = user;
-
-  const siteMachineLink = await getMachinesLinksForSiteMachine(corporationId, siteId, machineId, startDate as string, endDate as string);
-
-  if (!siteMachineLink?.length) {
-    return res.status(404).json({ error: 'Record not found!' });
-  }
-
-  const machine = siteMachineLink[0];
-  const siteCorp = await getCorporationSite(corporationId, siteId);
-
-  // /// timestamps and dates, for total activity and activity chart
-  const endTimestamp = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
-  const startTimestamp = endTimestamp - 24 * 60 * 60;
-  const [machineSensingData, corporationMachine] = await Promise.all([
-    // Get the latest sensing for the machine within the time period specified
-    getSensingForMachine(machine.machineId, startTimestamp, endTimestamp),
-    // Getting basic details of the machine
-    getCorporationMachine(corporationId, machine.machineId),
-  ]);
-
-  const sortedSensingData = [...(machineSensingData ?? [])].sort((a, b) => a.unixtime - b.unixtime);
-
-  const latestSensingWithLatLong = [...sortedSensingData].reverse().find((msd) => msd.latitude && msd.longitude);
-
-  // getting the latest latitude and longitude of the machine
-  const latitude = latestSensingWithLatLong?.latitude ?? null;
-  const longitude = latestSensingWithLatLong?.longitude ?? null;
-
-  const resObj = {
-    linkId: machine.sk,
-    siteId: machine.siteId,
-    corporationId: machine.corporationId,
-    machineId: machine.machineId,
-    vehicleId: corporationMachine?.vehicleId ?? null,
-    machineColorCode: machine.machineColorCode ?? null,
-    machineName: machine.machineName ?? null,
-    machineType: machine.machineType ?? null,
-    latitude,
-    longitude,
-    site: {
-      startTimeJst: siteCorp?.startTimeJst ?? null,
-      endTimeJst: siteCorp?.endTimeJst ?? null,
-      startDateJst: machine?.startDateJst ?? null,
-      endDateJst: machine?.endDateJst ?? null,
-      earliestSensingUnixtime: corporationMachine?.earliestSensingUnixtime ?? null,
-      latestSensingUnixtime: corporationMachine?.latestSensingUnixtime ?? null,
-    },
-    sensingData: sortedSensingData,
-  };
-
-  return res.status(200).json(resObj);
 });
 
 export default userRoutes;

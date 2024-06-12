@@ -9,7 +9,7 @@ verify_ssl = true
 src = {editable = true, path = "./src"}
 boto3 = "*"
 pytz = "2021.3"
-pandas = "v1.3.5"
+pandas = "v1.4.1"
 requests = "v2.26.0"
 
 [requires]

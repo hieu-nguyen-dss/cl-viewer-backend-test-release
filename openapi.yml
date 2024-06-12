@@ -1,0 +1,281 @@
+openapi: 3.0.0
+info:
+  title: CL Viewer API
+  description:
+    API Doc for CL Viewer API<br>
+    Login URL<br>
+    ・[Dev](https://dev.dn4p6r3sa4tf1.amplifyapp.com)<br>
+    ・[Staging](https://staging.dn4p6r3sa4tf1.amplifyapp.com)<br>
+    ・[Production](https://app.d1o5rk25grvkz3.amplifyapp.com)<br>
+  version: '1'
+servers:
+- url: http://localhost:8000/api
+  description: local
+- url: https://vvt0ltwz5m.execute-api.ap-northeast-1.amazonaws.com/dev/api
+  description: dev
+- url: https://xfqzrr5kvl.execute-api.ap-northeast-1.amazonaws.com/staging/api
+  description: staging
+- url: https://0x1gmjjy8b.execute-api.ap-northeast-1.amazonaws.com/app/api
+  description: production
+security:
+- Bearer: []
+tags:
+- name: admin
+paths:
+  /admin/links:
+    get:
+      description: Returns all machines linked by site.
+      tags:
+      - admin
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+              - id: SITEMACHINE#2428941e-eb9a-4ff1-94bb-5d2b656c9e7d#02fd2b85-ccaa-5755-a6e7-eab58b3d2bd2#2022-06-14#2022-06-16
+                siteId: 2428941e-eb9a-4ff1-94bb-5d2b656c9e7d
+                startDateJst: "2022-06-14"
+                endDateJst: "2022-06-16"
+                machineId: 02fd2b85-ccaa-5755-a6e7-eab58b3d2bd2
+                machineName: Test011
+                machineType: mini backhoe
+  /admin/machines:
+    get:
+      description: Returns all machines.
+      tags:
+      - admin
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+              - vehicleId: "ｹ_ﾄｳｷｮｳｶｲｼﾞｮｳ-A-ｱ-0003"
+                machineId: 02fd2b85-ccaa-5755-a6e7-eab58b3d2bd2
+                earliestSensingUnixtime: 1606945904
+                latestSensingUnixtime: 1606945911
+  /alerts:
+    get:
+      description: Returns all alerts belongings to the company.
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                corporationId: fac33128-62d0-4eda-82a4-041aeb44f0e7
+                alerts:
+                - unixtime: 1652508000
+                  alertType: long term activity alert
+                  alertId: 1
+                  machine:
+                  - id: 17f9bcff-9641-5497-a85a-e7fa8192f3ae
+                    colorCode: "#E4E7EC"
+                    name: truck-A
+                    type: truck
+                    vehicleId: ｲｲｲｵｲ-0-ﾄ-3
+  /machines/{machineId}/activities:
+    get:
+      description: Returns machine activityies.
+      parameters:
+        - $ref: '#/components/parameters/machineId'
+        - $ref: '#/components/parameters/date'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                activities:
+                - estimatedBehaviorId: "0"
+                  estimatedBehaviorType: "stop"
+                  estimatedTotalSeconds: 0
+                - estimatedBehaviorId: "1"
+                  estimatedBehaviorType: "excavation"
+                  estimatedTotalSeconds: 0
+                - estimatedBehaviorId: "2"
+                  estimatedBehaviorType: "change of direction"
+                  estimatedTotalSeconds: 0
+                - estimatedBehaviorId: "3"
+                  estimatedBehaviorType: "forward"
+                  estimatedTotalSeconds: 0
+                - estimatedBehaviorId: "4"
+                  estimatedBehaviorType: "carrying"
+                  estimatedTotalSeconds: 0
+                - estimatedBehaviorId: "5"
+                  estimatedBehaviorType: "other"
+                  estimatedTotalSeconds: 0
+                - estimatedBehaviorId: "99"
+                  estimatedBehaviorType: "not detected"
+                  estimatedTotalSeconds: 0
+                totalActivitySeconds:
+                - targetDate: 0,
+                  previousDate: 0
+                - rateVsPreviousDate: false
+  /machines/{machineId}/alerts:
+    get:
+      description: Returns machine alerts.
+      parameters:
+        - $ref: '#/components/parameters/machineId'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                machineId: 40909a4a-b5b1-5d49-89a7-10d52c44ddc2
+                alerts:
+                - unixtime: 1641779015
+                  alertType: "long term activity alert"
+                  alertId: 1
+                  machine:
+                    colorCode: "#E4E7EC"
+                    name: truck-A
+                    type: truck
+                    vehicleId: ｹ_ﾄｳｷｮｳｶｲｼﾞｮｳ-A-ｱ-0002
+  /machines/{machineId}/sensing:
+    get:
+      description: Returns machine sensing data.
+      parameters:
+        - $ref: '#/components/parameters/machineId'
+        - $ref: '#/components/parameters/date'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                machineId: 17f9bcff-9641-5497-a85a-e7fa8192f3ae
+                dateJst: "2022-05-01"
+                unixtime:
+                  start: 1651330800
+                  end: 1651417199
+                sensingData:
+                  - ut: 1652511543
+                    lat: "35.6422249"
+                    lon: "139.2998723"
+                    bId: 99
+  /me:
+    get:
+      description: Returns user infomation.
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                corporationId: fac33128-62d0-4eda-82a4-041aeb44f0e7
+                userId: 6718d5f6-ff1a-4812-a85f-f46b1b84302d
+                userName: デモ用アカウント姓 名
+                email: demo20210312@landlog.co.jp
+                corporationName: デモ企業
+  /sites:
+    get:
+      description: Returns all sites.
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+              - id: 2428941e-eb9a-4ff1-94bb-5d2b656c9e7d
+                name: test01
+                coordinate:
+                  latitude: "35.6803997"
+                  longitude: "139.76901742"
+                  time_zone: Asia/Tokyo
+                businessHours:
+                  start: 10:00:00
+                  end: 19:00:00
+  /sites/{siteId}/sensing:
+    get:
+      description: Returns sensing data by site.
+      parameters:
+        - $ref: '#/components/parameters/siteId'
+        - $ref: '#/components/parameters/startDate'
+        - $ref: '#/components/parameters/endDate'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - linkId: SITEMACHINE#2428941e-eb9a-4ff1-94bb-5d2b656c9e7d#17f9bcff-9641-5497-a85a-e7fa8192f3ae#2022-04-01#2022-05-31
+                  siteId: 2428941e-eb9a-4ff1-94bb-5d2b656c9e7d
+                  corporationId: fac33128-62d0-4eda-82a4-041aeb44f0e7
+                  machineId: 17f9bcff-9641-5497-a85a-e7fa8192f3ae
+                  vehicleId: ｲｲｲｵｲ-0-ﾄ-3
+                  machineColorCode: "#0475BB"
+                  machineName: test-machine
+                  machineType: backhoe
+                  latitude: "35.61435379"
+                  longitude: "139.37989411"
+                  site:
+                  - startTimeJst: "10:00:00"
+                    endTimeJst: "19:00:00"
+                    startDateJst: "2022-04-01"
+                    endDateJst: "2022-05-31"
+                    earliestSensingUnixtime: "1646353994"
+                    latestSensingUnixtime: "1656815746"
+                  sensingData:
+                    - estimatedBehaviorId: "99"
+                      latitude: "35.61435379"
+                      longitude: "139.37989411"
+                      unixtime: "1652511548"
+
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      description: Credentials or access token for API
+  parameters:
+    date:
+      name: date
+      in: query
+      required: true
+      schema:
+        type: string
+    endDate:
+      name: endDate
+      in: query
+      required: true
+      schema:
+        type: string
+    machineId:
+      name: machineId
+      in: path
+      required: true
+      schema:
+        type: string
+    siteId:
+      name: siteId
+      in: path
+      required: true
+      schema:
+        type: string
+    startDate:
+      name: startDate
+      in: query
+      required: true
+      schema:
+        type: string
